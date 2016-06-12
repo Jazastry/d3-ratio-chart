@@ -84,7 +84,7 @@ define(function(require) {
         return d3.round(ratio, 0);
     };
 
-    RatioChart.prototype.renderObject = function(propName, objA, objB) {
+    RatioChart.prototype.prepareRenderObject = function(propName, objA, objB) {
         var _this = this;
 
         var values = [objA[propName], objB[propName]];
@@ -108,16 +108,22 @@ define(function(require) {
         return renderObject;
     };
 
-    RatioChart.prototype.renderText = function(svg, obj) {
+    RatioChart.prototype.renderMainLabel = function(svg, obj) {
+    console.log('obj ' , obj);
         var _this = this;
 
-        var mainLabel = d3.svg.text();
-        
+        var text = svg.append("g")
+            .attr("transform", "translate(50,100)")
+            .append('text')
+            .attr("x", '30%')
+            .attr("y", '20%')
+            .attr("dy", ".16em")
+            .text(obj.chartName);        
     };
 
     RatioChart.prototype.render = function(propName, objA, objB) {
         var _this = this;
-        var renderObject = _this.renderObject(propName, objA, objB);
+        var renderObject = _this.prepareRenderObject(propName, objA, objB);
         var width = _this.container.node().getBoundingClientRect().width;
         var height = _this.container.node().getBoundingClientRect().height;
 
@@ -126,6 +132,7 @@ define(function(require) {
             .attr("height", height);
 
         _this.renderArcs(svg, renderObject);
+        _this.renderMainLabel(svg, renderObject);
     };
 
 
