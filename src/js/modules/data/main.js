@@ -2,12 +2,12 @@ define(function(require) {
     function Data() {
         this.dataEntries = [{
         		'name': 'tablet',
-        		'revenue': 80000,
+        		'revenue': 120000,
         		'impresions': 30000000,
         		'visits': 120000000
         	},{
         		'name': 'smartphone',
-        		'revenue': 120000,
+        		'revenue': 80000,
         		'impresions': 20000000,
         		'visits': 480000000
         	}

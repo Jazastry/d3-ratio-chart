@@ -17,5 +17,5 @@ define(function(require) {
 
     var RatioOneContainer = d3.select('body')
     	.append('div').attr('class', 'chart');
-    var ratioChartOne = new RatioChart('One', RatioOneContainer, dataService);
+    var ratioChartOne = new RatioChart('One', RatioOneContainer, dataService, true);
 });
