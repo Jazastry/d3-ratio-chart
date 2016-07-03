@@ -10,7 +10,8 @@ define(function(require) {
         lableColorMedium = '#8A8A8A',
         lableColorDark = '#393939',
         backColor = '#FFF',
-        padding = 55,
+        cyrclePadding = 55,
+        objInfoPadding = 10,
         ratioCyrcleThickness = 13,
         strokesCount = 4,
         strokesThickness = 0.5,
@@ -19,19 +20,20 @@ define(function(require) {
         containerHeight,
         cScale = d3.scale.linear().domain([0, 100]).range([0, 2 * Math.PI]),
         euFormat = d3.locale({
-                  "decimal": ",",
-                  "thousands": ".",
-                  "grouping": [3],
-                  "currency": ["", "€"],
-                  "dateTime": "%a %b %e %X %Y",
-                  "date": "%m/%d/%Y",
-                  "time": "%H:%M:%S",
-                  "periods": ["AM", "PM"],
-                  "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-                  "shortDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-                  "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-                  "shortMonths": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-                });
+            "decimal": ",",
+            "thousands": ".",
+            "grouping": [3],
+            "currency": ["", "€"],
+            "dateTime": "%a %b %e %X %Y",
+            "date": "%m/%d/%Y",
+            "time": "%H:%M:%S",
+            "periods": ["AM", "PM"],
+            "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            "shortDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+            "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+            "shortMonths": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        }),
+        colors;
 
     function RatioChart(name, container, dataService, isCurrency) {
         this.name = name;
@@ -44,12 +46,15 @@ define(function(require) {
 
     RatioChart.prototype.renderArcs = function(svg, obj) {
         var _this = this;
-        var outR = (containerWidth / 2) - (2 * padding);
+        var outR = (containerWidth / 2) - (2 * cyrclePadding);
         var inR = outR - ratioCyrcleThickness;
         var arc = _this.arc(inR, outR);
 
         var translateX = containerWidth / 2;
-        var translateY = translateX - padding;
+        var translateY = translateX - cyrclePadding;
+
+
+        console.log('obj.data ', obj.data[0]);
 
         svg.selectAll("path")
             .data(obj.data).enter()
@@ -94,12 +99,12 @@ define(function(require) {
             return res.reverse();
         }());
 
-        var outR = (containerWidth / 2) - (2 * padding) - (ratioCyrcleThickness + 2);
+        var outR = (containerWidth / 2) - (2 * cyrclePadding) - (ratioCyrcleThickness + 2);
         var inR = outR - strokesCyrcleThickness;
         var arc = _this.arc(inR, outR);
 
         var translateX = containerWidth / 2;
-        var translateY = translateX - padding;
+        var translateY = translateX - cyrclePadding;
 
         svg.selectAll("path")
             .data(strokesData).enter()
@@ -119,6 +124,9 @@ define(function(require) {
             var propName = 'revenue';
             var nameA = 'tablet';
             var nameB = 'smartphone';
+            _this.keyA = nameA;
+            _this.keyB = nameB;
+            _this.name = propName;
 
             switch (entryObj.name) {
                 case nameA:
@@ -180,49 +188,96 @@ define(function(require) {
         return renderObject;
     };
 
-    RatioChart.prototype.renderMainLabel = function(svg, obj) {
-        console.log('obj ', obj);
-        var _this = this;
-
-        svg.append("g")
-            .append("text")
-            .attr("x", "50%")
-            .attr("y", "30%")
-            .attr("text-anchor", "middle")
-            .attr("font-weight", 100)
-            .attr("font-size", 29)
-            .attr("stroke", lableColorLight)
-            .attr("stroke-width", "1px")
-            .attr("fill", lableColorLight)
-            .attr("letter-spacing", 1)
-            .attr("dy", ".16em")
-            .attr("font-family", "Verdana Narrow")
-            .text(obj.chartName.toUpperCase());
-    };
-
     RatioChart.prototype.numbFormat = function(numb) {
         var _this = this;
 
-        return euFormat.numberFormat(_this.isCurrency ? "$," : ",")(numb);       
+        return euFormat.numberFormat(_this.isCurrency ? "$," : ",")(numb);
     };
 
-    RatioChart.prototype.renderSum = function(svg, obj) {
+    RatioChart.prototype.renderInfo = function(svg, obj) {
+        console.log('obj ', obj);
         var _this = this;
 
-        svg.append("g")
-            .append("text")
+        function objInfoX(d) {
+            var thisSelected = d3.select(this);
+            var thisWidth = thisSelected.node().getBBox().width;
+            return d.name === _this.keyA ? objInfoPadding + "px" :
+                ((containerWidth - objInfoPadding) - thisWidth) + "px";
+        }
+
+        var mainInfoContainer = svg.append("g")
+            .style({
+                "text-anchor": "middle",
+                "font-weight": 100
+            });
+
+        var mainLabelElement = mainInfoContainer.append("text")
+            .style({
+                "font-size": 29,
+                "stroke": lableColorLight,
+                "stroke-width": "1px",
+                "fill": lableColorLight,
+                "letter-spacing": 1,
+            })
+            .attr("x", "50%")
+            .attr("y", "32%")
+            .attr("dy", ".16em")
+            .text(obj.chartName.toUpperCase());
+
+        var sumElement = mainInfoContainer.append("text")
+            .style({
+                "font-size": 39,
+                "stroke": lableColorDark,
+                "stroke-width": "2px",
+                "fill": lableColorDark,
+                "letter-spacing": 0,
+            })
             .attr("x", "50%")
             .attr("y", "40.4%")
-            .attr("text-anchor", "middle")
-            .attr("font-weight", 100)
-            .attr("font-size", 39)
-            .attr("stroke", lableColorDark)
-            .attr("stroke-width", "2px")
-            .attr("fill", lableColorDark)
-            .attr("letter-spacing", 0)
             .attr("dy", ".16em")
-            .attr("font-family", "Verdana Narrow")
             .text(_this.numbFormat(obj.total));
+
+        var infoSectionLables = svg.append("g");
+
+        var objInfoLables = infoSectionLables.selectAll("text")
+            .data(obj.data).enter()
+            .append("text").attr("d", "text")          
+            .style({
+                "text-transform": "capitalize",
+                "font-size": "22px",
+                "font-weight": "500",
+                "stroke-width": "1px",
+                "letter-spacing": 1,
+            })
+            .attr("fill", function(d) {
+                return d.color;
+            })
+            .attr("stroke", function(d) {
+                return d.color;
+            }).text(function(d) {
+                return d.name;
+            })
+            .attr("y", "73%")
+            .attr("x", objInfoX);
+
+        var infoSectionData = svg.append("g");
+
+        var objMainData = infoSectionData.selectAll("text")
+            .data(obj.data).enter()
+            .append("g").attr("d", "g")            
+            .append("text");            
+
+        var perc = objMainData.append("tspan").text(function(d) {
+            return d.perc + "%";
+        });
+
+        var objValue = objMainData.append("tspan").text(function(d) {
+            return ' ' + _this.numbFormat(d[obj.chartName]);
+        });
+
+
+        objMainData.attr("y", "77%")
+            .attr("x", objInfoX);
     };
 
     RatioChart.prototype.render = function(propName, objA, objB) {
@@ -237,8 +292,7 @@ define(function(require) {
 
         _this.renderArcs(svg, renderObject);
         _this.renderInnerStrokesCyrcle(svg);
-        _this.renderMainLabel(svg, renderObject);
-        _this.renderSum(svg, renderObject);
+        _this.renderInfo(svg, renderObject);
     };
 
     return RatioChart;
