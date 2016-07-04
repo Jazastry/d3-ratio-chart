@@ -18,22 +18,10 @@ define(function(require) {
         strokesCyrcleThickness = 5,
         containerWidth,
         containerHeight,
-        cScale = d3.scale.linear().domain([0, 100]).range([0, 2 * Math.PI]),
-        euFormat = d3.locale({
-            "decimal": ",",
-            "thousands": ".",
-            "grouping": [3],
-            "currency": ["", "€"],
-            "dateTime": "%a %b %e %X %Y",
-            "date": "%m/%d/%Y",
-            "time": "%H:%M:%S",
-            "periods": ["AM", "PM"],
-            "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-            "shortDays": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-            "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-            "shortMonths": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        }),
-        colors;
+        arcs,
+        perc,
+        sumElement,
+        objMainData;
 
     function RatioChart(name, container, dataService, isCurrency) {
         this.name = name;
@@ -53,15 +41,19 @@ define(function(require) {
         var translateX = containerWidth / 2;
         var translateY = translateX - cyrclePadding;
 
-
-        console.log('obj.data ', obj.data[0]);
-
-        svg.selectAll("path")
-            .data(obj.data).enter()
-            .append("path").attr("d", arc)
+        arcs = svg.selectAll("path")
+            .data(function(d) {
+                return d.data;
+            }).enter()
+            .append("path")
+            .attr("d", arc)
             .style("fill", function(d) {
                 return d.color;
             }).attr("transform", "translate(" + translateX + ", " + translateY + ")");
+
+        arcs.update = function(updateObj) {
+            arcs.data(updateObj.data).attr("d", arc);
+        };
     };
 
     RatioChart.prototype.arc = function(inR, outR) {
@@ -69,10 +61,16 @@ define(function(require) {
             .innerRadius(inR)
             .outerRadius(outR)
             .startAngle(function(d) {
-                return cScale(d.startAngle);
-            }).endAngle(function(d) {
-                return cScale(d.endAngle);
+                return utils.cScale(d.startAngle);
+            })
+            .endAngle(function(d) {
+                return utils.cScale(d.endAngle);
             });
+    };
+
+    RatioChart.prototype.percText = function(first_argument) {
+        return d3.select("text")
+
     };
 
     RatioChart.prototype.renderInnerStrokesCyrcle = function(svg) {
@@ -118,16 +116,15 @@ define(function(require) {
     RatioChart.prototype.subscribe = function() {
         var _this = this,
             objA = null,
-            objB = null;
+            objB = null,
+            propName = 'revenue',
+            nameA = 'tablet',
+            nameB = 'smartphone';
+        _this.keyA = nameA;
+        _this.keyB = nameB;
+        _this.name = propName;
 
-        function revenueHandler(entryObj) {
-            var propName = 'revenue';
-            var nameA = 'tablet';
-            var nameB = 'smartphone';
-            _this.keyA = nameA;
-            _this.keyB = nameB;
-            _this.name = propName;
-
+        function dataHandler(type, entryObj) {
             switch (entryObj.name) {
                 case nameA:
                     objA = utils.clone(entryObj);
@@ -139,14 +136,18 @@ define(function(require) {
                     break;
             }
 
-            if (objA && objB) {
+            if (objA && objB && type === 'create') {
                 _this.render(propName, objA, objB);
+            } else if (objA && objB && type === 'update') {
+                _this.update(propName, objA, objB);
             }
         }
 
         function subscription(type, data) {
-            if (type === 'create.tablet' || type === 'create.smartphone') {
-                revenueHandler(data);
+            if (type === 'create.' + _this.keyA || type === 'create.' + _this.keyB) {
+                dataHandler('create', data);
+            } else if (type === 'update.' + _this.keyA || type === 'update.' + _this.keyB) {
+                dataHandler('update', data);
             }
         }
 
@@ -191,11 +192,10 @@ define(function(require) {
     RatioChart.prototype.numbFormat = function(numb) {
         var _this = this;
 
-        return euFormat.numberFormat(_this.isCurrency ? "$," : ",")(numb);
+        return utils.euFormat.numberFormat(_this.isCurrency ? "$," : ",")(numb);
     };
 
-    RatioChart.prototype.renderInfo = function(svg, obj) {
-        console.log('obj ', obj);
+    RatioChart.prototype.renderInfo = function(svg) {
         var _this = this;
 
         function objInfoX(d) {
@@ -205,26 +205,28 @@ define(function(require) {
                 ((containerWidth - objInfoPadding) - thisWidth) + "px";
         }
 
-        var mainInfoContainer = svg.append("g")
-            .style({
+        var mainInfoContainer = svg.append("g").style({
                 "text-anchor": "middle",
                 "font-weight": 100
             });
 
         var mainLabelElement = mainInfoContainer.append("text")
+            .attr("d", "text")           
             .style({
                 "font-size": 29,
                 "stroke": lableColorLight,
                 "stroke-width": "1px",
                 "fill": lableColorLight,
                 "letter-spacing": 1,
-            })
+            })            
             .attr("x", "50%")
             .attr("y", "32%")
             .attr("dy", ".16em")
-            .text(obj.chartName.toUpperCase());
+            .text(function(d) {                
+                return d.chartName.toUpperCase();
+            });
 
-        var sumElement = mainInfoContainer.append("text")
+        sumElement = mainInfoContainer.append("text")
             .style({
                 "font-size": 39,
                 "stroke": lableColorDark,
@@ -235,13 +237,17 @@ define(function(require) {
             .attr("x", "50%")
             .attr("y", "40.4%")
             .attr("dy", ".16em")
-            .text(_this.numbFormat(obj.total));
+            .text(function(d) {
+                return _this.numbFormat(d.total);
+            });
 
         var infoSectionLables = svg.append("g");
 
         var objInfoLables = infoSectionLables.selectAll("text")
-            .data(obj.data).enter()
-            .append("text").attr("d", "text")          
+            .data(function(d) {
+                return d.data;
+            }).enter()
+            .append("text").attr("d", "text")
             .style({
                 "text-transform": "capitalize",
                 "font-size": "22px",
@@ -262,22 +268,43 @@ define(function(require) {
 
         var infoSectionData = svg.append("g");
 
-        var objMainData = infoSectionData.selectAll("text")
-            .data(obj.data).enter()
-            .append("g").attr("d", "g")            
-            .append("text");            
+        objMainData = infoSectionData.selectAll("text")
+            .data(function(d) {
+                return d.data;
+            }).enter()
+            .append("g").attr("d", "g")
+            .append("text");
 
-        var perc = objMainData.append("tspan").text(function(d) {
+        perc = objMainData.append("tspan").text(function(d) {
             return d.perc + "%";
+        }).style({
+            "stroke": lableColorMedium,
+            "stroke-width": "1px",
+            "fill": lableColorMedium,
         });
 
         var objValue = objMainData.append("tspan").text(function(d) {
-            return ' ' + _this.numbFormat(d[obj.chartName]);
+            return _this.numbFormat(d[_this.name]);
+        })
+        .attr("dx", "10")
+        .style({
+            "stroke": lableColorLight,
+            "stroke-width": "1px",
+            "fill": lableColorLight,
         });
 
 
         objMainData.attr("y", "77%")
             .attr("x", objInfoX);
+    };
+
+    RatioChart.prototype.update = function(propName, objA, objB) {
+        var _this = this;
+        var renderObject = _this.prepareRenderObject(propName, objA, objB);
+
+        arcs.update(renderObject);
+        sumElement.text(_this.numbFormat(renderObject.total));
+        perc
     };
 
     RatioChart.prototype.render = function(propName, objA, objB) {
@@ -287,12 +314,13 @@ define(function(require) {
         containerHeight = _this.container.node().getBoundingClientRect().height;
 
         var svg = _this.container.append("svg")
+            .data([renderObject])           
             .attr("width", containerWidth)
             .attr("height", containerHeight);
 
-        _this.renderArcs(svg, renderObject);
+        _this.renderArcs(svg);
         _this.renderInnerStrokesCyrcle(svg);
-        _this.renderInfo(svg, renderObject);
+        _this.renderInfo(svg);
     };
 
     return RatioChart;

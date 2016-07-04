@@ -46,10 +46,26 @@ define(function(require) {
         }
     };
 
-    Data.prototype._notifyUpdate = function(messageType, data) {
+    Data.prototype._notifyUpdate = function(entry) {
     	var _this = this;
-        for (var i = 0; i < _this.subscriptions.length; i++) {
-            _this.subscriptions[i](messageType, data);
+        for (var i = 0; i < _this.subscriptions.length; i++) {            
+            _this._notifyEntry('update', entry, _this.subscriptions[i]);
+        }
+    };
+
+    Data.prototype.startUpdateSimulator = function() {
+        var _this = this;
+        var myVar = setInterval(myTimer, 1000);
+        function myTimer() {
+            for (var i = 0; i < _this.dataEntries.length; i++) {
+                var entry = _this.dataEntries[i];
+                for(var key in entry) {                    
+                    if (typeof entry[key] === 'number') {
+                        entry[key] += Math.floor((Math.random() * 1000) + 1);
+                    }
+                }
+                _this._notifyUpdate(entry);
+            }            
         }
     };
 
