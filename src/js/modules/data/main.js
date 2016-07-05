@@ -55,15 +55,16 @@ define(function(require) {
 
     Data.prototype.startUpdateSimulator = function() {
         var _this = this;
-        var myVar = setInterval(myTimer, 1000);
+        var myVar = setInterval(myTimer, 2000);
         function myTimer() {
             for (var i = 0; i < _this.dataEntries.length; i++) {
                 var entry = _this.dataEntries[i];
                 for(var key in entry) {                    
                     if (typeof entry[key] === 'number') {
-                        entry[key] += Math.floor((Math.random() * 1000) + 1);
+                        entry[key] += Math.floor((Math.random() * 57));
                     }
                 }
+
                 _this._notifyUpdate(entry);
             }            
         }

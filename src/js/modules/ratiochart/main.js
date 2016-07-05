@@ -19,7 +19,8 @@ define(function(require) {
         containerWidth,
         containerHeight,
         arcs,
-        perc,
+        //perc,
+        infoSectionData,
         sumElement,
         objMainData;
 
@@ -159,32 +160,38 @@ define(function(require) {
         var scale = d3.scale.linear()
             .domain([d3.max(valCouple), 0])
             .range([0, 100]),
-            ratio = scale(d3.min(valCouple));
+            ratio = scale(d3.min(valCouple));        
 
         return d3.round(ratio, 2);
     };
 
     RatioChart.prototype.prepareRenderObject = function(propName, objA, objB) {
+    console.log('objA ' , objA);
         var _this = this;
 
         var values = [objA[propName], objB[propName]];
         var total = objA[propName] + objB[propName];
+
         var renderObject = {
             values: values,
-            ratio: _this.renderRatio(values),
+            ratio: 0,//_this.renderRatio(values),
             data: [objA, objB],
             chartName: propName,
             total: total
         };
 
-        objA.perc = utils.percentageFromWhole(total, objA[propName]);
-        objA.startAngle = renderObject.ratio;
-        objA.endAngle = maxAngle;
-        objA.color = aColor;
+        
         objB.perc = utils.percentageFromWhole(total, objB[propName]);
         objB.startAngle = minAngle;
-        objB.endAngle = renderObject.ratio;
+        objB.endAngle = objB.perc;//renderObject.ratio;
         objB.color = bColor;
+
+        objA.perc = utils.percentageFromWhole(total, objA[propName]);
+        objA.startAngle = objB.perc;//renderObject.ratio;
+        objA.endAngle = maxAngle;
+        objA.color = aColor;
+
+        renderObject.ratio = objB.perc;
 
         return renderObject;
     };
@@ -266,16 +273,21 @@ define(function(require) {
             .attr("y", "73%")
             .attr("x", objInfoX);
 
-        var infoSectionData = svg.append("g");
+        infoSectionData = svg.append("g");
 
         objMainData = infoSectionData.selectAll("text")
             .data(function(d) {
                 return d.data;
             }).enter()
-            .append("g").attr("d", "g")
-            .append("text");
+            .append("g")
+            .append("text")//.attr("d", text)
+            .style({
+                    "stroke": lableColorMedium,
+                    "stroke-width": "1px",
+                    "fill": lableColorMedium,                
+            });
 
-        perc = objMainData.append("tspan").text(function(d) {
+        var perc = objMainData.append("tspan").attr("class", "perc").text(function(d) {
             return d.perc + "%";
         }).style({
             "stroke": lableColorMedium,
@@ -283,7 +295,7 @@ define(function(require) {
             "fill": lableColorMedium,
         });
 
-        var objValue = objMainData.append("tspan").text(function(d) {
+        var value = objMainData.append("tspan").text(function(d) {
             return _this.numbFormat(d[_this.name]);
         })
         .attr("dx", "10")
@@ -296,6 +308,14 @@ define(function(require) {
 
         objMainData.attr("y", "77%")
             .attr("x", objInfoX);
+
+        objMainData.update = function(updateObj) {
+            perc.data(updateObj.data).text(function(d) { return d.perc + "%";});
+            value.data(updateObj.data).text(function(d) { return _this.numbFormat(d[_this.name]);});
+
+            this.attr("y", "77%")
+            .attr("x", objInfoX);
+        };
     };
 
     RatioChart.prototype.update = function(propName, objA, objB) {
@@ -304,7 +324,7 @@ define(function(require) {
 
         arcs.update(renderObject);
         sumElement.text(_this.numbFormat(renderObject.total));
-        perc
+        objMainData.update(renderObject);
     };
 
     RatioChart.prototype.render = function(propName, objA, objB) {
@@ -313,8 +333,7 @@ define(function(require) {
         containerWidth = _this.container.node().getBoundingClientRect().width;
         containerHeight = _this.container.node().getBoundingClientRect().height;
 
-        var svg = _this.container.append("svg")
-            .data([renderObject])           
+        var svg = _this.container.data([renderObject]).append("svg")                       
             .attr("width", containerWidth)
             .attr("height", containerHeight);
 

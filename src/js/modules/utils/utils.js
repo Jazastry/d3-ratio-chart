@@ -2,7 +2,8 @@ define(function(require) {
     var d3 = require('d3');
     return {
         percentageFromWhole: function(whole, part, round) {
-            return Number(((part / whole) * 100).toFixed(round ? round : 0));
+            var  res = Number(((part / whole) * 100).toFixed(round ? round : 2));
+            return res;
         },
         clone: function(obj) {
             return JSON.parse(JSON.stringify(obj));
