@@ -17,6 +17,23 @@ define(function(require) {
 
     var RatioOneContainer = d3.select('body')
     	.append('div').attr('class', 'chart');
-    var ratioChartOne = new RatioChart('One', RatioOneContainer, dataService, true);
+    var ratioChartOne = new RatioChart({
+        "dataKey": "revenue",
+        "container": RatioOneContainer,
+        "dataService": dataService,
+        "isCurrency": true,
+        "colorScheme": "green"
+    });
+
+    var RatioTwoContainer = d3.select('body')
+        .append('div').attr('class', 'chart');
+    var ratioChartTwo = new RatioChart({
+        "dataKey": "impresions",
+        "container": RatioTwoContainer,
+        "dataService": dataService,
+        "isCurrency": false,
+        "colorScheme": "blue"
+    });
+
     dataService.startUpdateSimulator();
 });

@@ -48,8 +48,9 @@ define(function(require) {
 
     Data.prototype._notifyUpdate = function(entry) {
     	var _this = this;
+
         for (var i = 0; i < _this.subscriptions.length; i++) {            
-            _this._notifyEntry('update', entry, _this.subscriptions[i]);
+            _this.subscriptions[i]('update.' + entry.name, entry);
         }
     };
 
@@ -59,9 +60,10 @@ define(function(require) {
         function myTimer() {
             for (var i = 0; i < _this.dataEntries.length; i++) {
                 var entry = _this.dataEntries[i];
+
                 for(var key in entry) {                    
                     if (typeof entry[key] === 'number') {
-                        entry[key] += Math.floor((Math.random() * 57));
+                        entry[key] += Math.floor((Math.random() * 57 + 1));
                     }
                 }
 
