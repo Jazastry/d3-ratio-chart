@@ -1,74 +1,92 @@
 define(function(require) {
-    function Data() {
-        this.dataEntries = [{
-        		'name': 'tablet',
-        		'revenue': 120000,
-        		'impresions': 30000000,
-        		'visits': 120000000
-        	},{
-        		'name': 'smartphone',
-        		'revenue': 80000,
-        		'impresions': 20000000,
-        		'visits': 480000000
-        	}
-        ];
-        this.subscriptions = [];        
+    utils = require('utils');
+    function Data(options) {
+        this.data = {};
+        this.updateNumbRange = options.updateNumbRange;
+        this.updateTimeStep = options.updateTimeStep;
+        this.onUpdate = options.onUpdate;
     }
 
-    Data.prototype.subscribe = function(func) {
-    	var _this = this;
-        for (var i = 0; i < _this.subscriptions.length; i++) {
-            if (_this.subscriptions[i] === func) {
-                return;
-            }
-        }
-        _this.subscriptions.push(func);
-        _this._notifyCreate(func);
-    };
-
-    Data.prototype.unsubscribe = function(func) {
-    	var _this = this;
-        for (var i = 0; i < _this.subscriptions.length; i++) {
-            if (_this.subscriptions[i] === func) {
-                _this.subscriptions.splice(i, 1);
-            }
-        }
-    };
-
-    Data.prototype._notifyEntry = function(notifyType , entry, func) {
-        func(notifyType + '.' + entry.name, entry);        
-    };
-
-    Data.prototype._notifyCreate = function(func) {
+    Data.prototype.loadData = function() {
         var _this = this;
-        for (var i = 0; i < _this.dataEntries.length; i++) {
-        	_this._notifyEntry('create', _this.dataEntries[i], func);
+
+        function type(d) {
+            d = {
+                'revenue': +d.revenue,
+                'impressions': +d.impressions,
+                'visits': +d.visits,
+                'timeindex': +d.timeindex,
+                'device': d.device,
+            };
+            return d;
         }
+
+        var promiseTabletData = d3.promise
+            .csv('./js/modules/data/tablet-table.csv', type);
+        var promiseSmartphoneData = d3.promise
+            .csv('./js/modules/data/smartphone-table.csv', type);
+
+        return promiseTabletData.then(function(d) {
+            _this.data.tablet = d;
+            return promiseSmartphoneData;
+        }).then(function(d) {
+            _this.data.smartphone = d;
+        });
     };
 
-    Data.prototype._notifyUpdate = function(entry) {
-    	var _this = this;
+    Data.prototype.get = function(options) {
+        var _this = this;
 
-        for (var i = 0; i < _this.subscriptions.length; i++) {            
-            _this.subscriptions[i]('update.' + entry.name, entry);
+        function last(count, arr, prop) {
+            var res = [];
+            for (var i = arr.length - 1; i > arr.length - (count + 1); i--) {
+                if (arr[i][prop]) {
+                    res.push(arr[i][prop]);
+                }                
+            }
+            return res.reverse();
         }
+
+        function caalcTotal(arr) {
+            return arr.reduce(function(prev, curr) {
+                return prev + curr;
+            });
+        }
+
+        var leftEntry = {
+            name: options.leftentry,
+            vals: last(options.count, _this.data[options.leftentry], options.property)                      
+        };
+        leftEntry.total = caalcTotal(leftEntry.vals);
+
+        var rightEntry = {
+            name: options.rightentry,
+            vals: last(options.count, _this.data[options.rightentry], options.property)            
+        };
+        rightEntry.total = caalcTotal(rightEntry.vals);
+
+        var total = leftEntry.total + rightEntry.total;
+        leftEntry.percentage = utils.percentageFromWhole(total, leftEntry.total);
+        rightEntry.percentage = utils.percentageFromWhole(total, rightEntry.total);
+
+        return {
+            property: options.property,
+            leftEntry: leftEntry,
+            rightEntry: rightEntry,
+            total: leftEntry.total + rightEntry.total,
+            ratio: rightEntry.percentage
+        };
     };
 
     Data.prototype.startUpdateSimulator = function() {
         var _this = this;
-        var myVar = setInterval(myTimer, 2000);
+        var myVar = setInterval(myTimer, _this.updateTimeStep);
+
         function myTimer() {
-            for (var i = 0; i < _this.dataEntries.length; i++) {
-                var entry = _this.dataEntries[i];
 
-                for(var key in entry) {                    
-                    if (typeof entry[key] === 'number') {
-                        entry[key] += Math.floor((Math.random() * 57 + 1));
-                    }
-                }
 
-                _this._notifyUpdate(entry);
-            }            
+
+            _this.onUpdate(_this.data);
         }
     };
 

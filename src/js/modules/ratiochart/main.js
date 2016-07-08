@@ -1,27 +1,27 @@
 define(function(require) {
     var d3 = require('d3'),
         utils = require('utils'),
-        minAngle = 0,
-        maxAngle = 100,
-        aColor,
-        bColor,
-        strokeColor,
-        lableColorLight = '#B2B2B2',
-        lableColorMedium = '#8A8A8A',
-        lableColorDark = '#393939',
-        backColor = '#FFF',
-        cyrclePadding = 55,
-        objInfoPadding = 10,
-        ratioCyrcleThickness = 13,
-        strokesCount = 4,
-        strokesThickness = 0.5,
-        strokesCyrcleThickness = 5,
-        containerWidth,
-        containerHeight,
-        arcs,
-        infoSectionData,
-        sumElement,
-        objMainData;
+        _minAngle = 0,
+        _maxAngle = 100,
+        _aColor,
+        _bColor,
+        _strokeColor,
+        _lableColorLight = '#B2B2B2',
+        _lableColorMedium = '#8A8A8A',
+        _lableColorDark = '#393939',
+        _backColor = '#FFF',
+        _cyrclePadding = 55,
+        _objInfoPadding = 10,
+        _ratioCyrcleThickness = 13,
+        _strokesCount = 4,
+        _strokesThickness = 0.5,
+        _strokesCyrcleThickness = 5,
+        _containerWidth,
+        _containerHeight,
+        _arcs,
+        _infoSectionData,
+        _sumElement,
+        _mainObjectsData;
 
     function RatioChart(options) {
         this.name = options.dataKey;
@@ -30,44 +30,44 @@ define(function(require) {
         this.isCurrency = options.isCurrency ? options.isCurrency : false;
         this.subscriptionFunction = null;
         this.colorScheme(options.colorScheme);
-        this.keyA = 'tablet';
-        this.keyB = 'smartphone';
+        this.keyA = options.leftSideObjKey;
+        this.keyB = options.rightSideObjKey;
 
-        this.subscribe();
+        this.render();
     }
 
     RatioChart.prototype.colorScheme = function(name) {
-        switch(name) {
+        switch (name) {
             case 'green':
-                aColor = '#56D32E';
-                bColor = '#086501';
-                strokeColor = '#B9C3A0';
+                _aColor = '#56D32E';
+                _bColor = '#086501';
+                _strokeColor = '#B9C3A0';
                 break;
             case 'yellow':
-                aColor = '#F8C104';
-                bColor = '#D65111';
-                strokeColor = '#BBB990';
+                _aColor = '#F8C104';
+                _bColor = '#D65111';
+                _strokeColor = '#BBB990';
                 break;
             case 'blue':
-                aColor = '#17C4E4';
-                bColor = '#114F66';
-                strokeColor = '#B8B8B8';
+                _aColor = '#17C4E4';
+                _bColor = '#114F66';
+                _strokeColor = '#B8B8B8';
                 break;
             default:
                 break;
         }
     };
 
-    RatioChart.prototype.renderArcs = function(svg, obj) {
+    RatioChart.prototype.renderArcs = function(svg) {
         var _this = this;
-        var outR = (containerWidth / 2) - (2 * cyrclePadding);
-        var inR = outR - ratioCyrcleThickness;
+        var outR = (_containerWidth / 2) - (2 * _cyrclePadding);
+        var inR = outR - _ratioCyrcleThickness;
         var arc = _this.arc(inR, outR);
 
-        var translateX = containerWidth / 2;
-        var translateY = translateX - cyrclePadding;
+        var translateX = _containerWidth / 2;
+        var translateY = translateX - _cyrclePadding;
 
-        arcs = svg.selectAll("path")
+        _arcs = svg.selectAll("path")
             .data(function(d) {
                 return d.data;
             }).enter()
@@ -77,8 +77,8 @@ define(function(require) {
                 return d.color;
             }).attr("transform", "translate(" + translateX + ", " + translateY + ")");
 
-        arcs.update = function(updateObj) {
-            arcs.data(updateObj.data).attr("d", arc);
+        _arcs.update = function(updateObj) {
+            _arcs.data(updateObj.data).transition().duration(750).attr("d", arc); //.transition().duration(750).attrTween("d", arcTween)
         };
     };
 
@@ -87,6 +87,7 @@ define(function(require) {
             .innerRadius(inR)
             .outerRadius(outR)
             .startAngle(function(d) {
+
                 return utils.cScale(d.startAngle);
             })
             .endAngle(function(d) {
@@ -99,31 +100,31 @@ define(function(require) {
         var strokesData = (function() {
             var res = [];
             var start = 0;
-            var end = strokesThickness;
-            for (var i = 0; i < strokesCount + 1; i++) {
+            var end = _strokesThickness;
+            for (var i = 0; i < _strokesCount + 1; i++) {
                 res.push({
                     startAngle: start,
                     endAngle: end,
-                    color: strokeColor
+                    color: _strokeColor
                 });
 
                 start += 25;
                 res.push({
                     startAngle: end,
                     endAngle: start,
-                    color: backColor
+                    color: _backColor
                 });
                 end += 25;
             }
             return res.reverse();
         }());
 
-        var outR = (containerWidth / 2) - (2 * cyrclePadding) - (ratioCyrcleThickness + 2);
-        var inR = outR - strokesCyrcleThickness;
+        var outR = (_containerWidth / 2) - (2 * _cyrclePadding) - (_ratioCyrcleThickness + 2);
+        var inR = outR - _strokesCyrcleThickness;
         var arc = _this.arc(inR, outR);
 
-        var translateX = containerWidth / 2;
-        var translateY = translateX - cyrclePadding;
+        var translateX = _containerWidth / 2;
+        var translateY = translateX - _cyrclePadding;
 
         svg.selectAll("path")
             .data(strokesData).enter()
@@ -134,69 +135,52 @@ define(function(require) {
             .attr("transform", "translate(" + translateX + ", " + translateY + ")");
     };
 
-    RatioChart.prototype.subscribe = function() {
-        var _this = this,
-            objA,
-            objB;
-
-        function dataHandler(type, entryObj) {
-            switch (entryObj.name) {
-                case _this.keyA:
-                    objA = utils.clone(entryObj);
-                    break;
-                case _this.keyB:
-                    objB = utils.clone(entryObj);
-                    break;
-                default:
-                    break;
-            }
-
-            if (objA && objB && type === 'create') {
-                _this.render(objA, objB);
-            } else if (type === 'update') {                
-                _this.update(objA, objB);                
-            }
-        }
-
-        function subscription(type, data) {
-            if (type === 'create.' + _this.keyA || type === 'create.' + _this.keyB) {
-                dataHandler('create', data);                
-            } else if (type === 'update.' + _this.keyA || type === 'update.' + _this.keyB) {                
-                dataHandler('update', data);
-            }
-        }
-
-        _this.subscriptionFunction = subscription;
-        _this.dataService.subscribe(_this.subscriptionFunction);
-    };
-
-    RatioChart.prototype.prepareRenderObject = function(objA, objB) {
+    RatioChart.prototype.prepareRenderObject = function(data) {
 
         var _this = this;
+        var renderObject = {};
 
-        var values = [objA[_this.name], objB[_this.name]];
-        var total = objA[_this.name] + objB[_this.name];
+        if (data) {
+            var total = objA[_this.name] + objB[_this.name];
 
-        var renderObject = {
-            values: values,
-            ratio: 0,
-            data: [objA, objB],
-            chartName: _this.name,
-            total: total
-        };
+            renderObject = {
+                ratio: 0,
+                data: [objA, objB],
+                total: total
+            };
 
-        
-        objB.perc = utils.percentageFromWhole(total, objB[_this.name]);
-        objB.startAngle = minAngle;
-        objB.endAngle = objB.perc;
-        objB.color = bColor;
 
-        objA.perc = utils.percentageFromWhole(total, objA[_this.name]);
-        objA.startAngle = objB.perc;
-        objA.endAngle = maxAngle;
-        objA.color = aColor;
+            objB.perc = utils.percentageFromWhole(total, objB[_this.name]);
+            objB.startAngle = _minAngle;
+            objB.endAngle = objB.perc;
+            objB.color = _bColor;
 
-        renderObject.ratio = objB.perc;
+            objA.perc = utils.percentageFromWhole(total, objA[_this.name]);
+            objA.startAngle = objB.perc;
+            objA.endAngle = _maxAngle;
+            objA.color = _aColor;
+
+            renderObject.ratio = objB.perc;
+        } else {
+            renderObject = {
+                //values: [0, 0],
+                ratio: 50,
+                data: [{
+                    'perc': 50,
+                    'startAngle': 50,
+                    'endAngle': _maxAngle,
+                    'color': _aColor,
+                    'name': _this.keyA,                    
+                },{
+                   'perc': 50,
+                   'startAngle': _minAngle,
+                   'endAngle': 50,
+                   'color': _bColor,
+                   'name': _this.keyB
+                }],
+                total: 0
+            };
+        }
 
         return renderObject;
     };
@@ -213,37 +197,37 @@ define(function(require) {
         function objInfoX(d) {
             var thisSelected = d3.select(this);
             var thisWidth = thisSelected.node().getBBox().width;
-            return d.name === _this.keyA ? objInfoPadding + "px" :
-                ((containerWidth - objInfoPadding) - thisWidth) + "px";
+            return d.name === _this.keyA ? _objInfoPadding + "px" :
+                ((_containerWidth - _objInfoPadding) - thisWidth) + "px";
         }
 
         var mainInfoContainer = svg.append("g").style({
-                "text-anchor": "middle",
-                "font-weight": 100
-            });
+            "text-anchor": "middle",
+            "font-weight": 100
+        });
 
         var mainLabelElement = mainInfoContainer.append("text")
-            .attr("d", "text")           
+            .attr("d", "text")
             .style({
                 "font-size": 29,
-                "stroke": lableColorLight,
+                "stroke": _lableColorLight,
                 "stroke-width": "1px",
-                "fill": lableColorLight,
+                "fill": _lableColorLight,
                 "letter-spacing": 1,
-            })            
+            })
             .attr("x", "50%")
             .attr("y", "32%")
             .attr("dy", ".16em")
-            .text(function(d) {                
-                return d.chartName.toUpperCase();
+            .text(function(d) {
+                return _this.name.toUpperCase();
             });
 
-        sumElement = mainInfoContainer.append("text")
+        _sumElement = mainInfoContainer.append("text")
             .style({
                 "font-size": 39,
-                "stroke": lableColorDark,
+                "stroke": _lableColorDark,
                 "stroke-width": "2px",
-                "fill": lableColorDark,
+                "fill": _lableColorDark,
                 "letter-spacing": 0,
             })
             .attr("x", "50%")
@@ -278,47 +262,51 @@ define(function(require) {
             .attr("y", "71%")
             .attr("x", objInfoX);
 
-        infoSectionData = svg.append("g");
-        objMainData = infoSectionData.selectAll("text")
+        _infoSectionData = svg.append("g");
+        _mainObjectsData = _infoSectionData.selectAll("text")
             .data(function(d) {
                 return d.data;
             }).enter()
             .append("g")
             .append("text")
             .style({
-                    "stroke": lableColorMedium,
-                    "stroke-width": "1px",
-                    "fill": lableColorMedium,                
+                "stroke": _lableColorMedium,
+                "stroke-width": "1px",
+                "fill": _lableColorMedium,
             });
 
-        var perc = objMainData.append("tspan").text(function(d) {
+        var perc = _mainObjectsData.append("tspan").text(function(d) {
             return d.perc + "%";
         }).style({
-            "stroke": lableColorMedium,
+            "stroke": _lableColorMedium,
             "stroke-width": "1px",
-            "fill": lableColorMedium,
+            "fill": _lableColorMedium,
         });
 
-        var value = objMainData.append("tspan").text(function(d) {
-            return _this.numbFormat(d[_this.name]);
-        })
-        .attr("dx", "10")
-        .style({
-            "stroke": lableColorLight,
-            "stroke-width": "1px",
-            "fill": lableColorLight,
-        });
+        var value = _mainObjectsData.append("tspan").text(function(d) {
+                return _this.numbFormat(d[_this.name] ? d[_this.name] : 0);
+            })
+            .attr("dx", "10")
+            .style({
+                "stroke": _lableColorLight,
+                "stroke-width": "1px",
+                "fill": _lableColorLight,
+            });
 
 
-        objMainData.attr("y", "77%")
+        _mainObjectsData.attr("y", "77%")
             .attr("x", objInfoX);
 
-        objMainData.update = function(updateObj) {
-            perc.data(updateObj.data).text(function(d) { return d.perc + "%";});
-            value.data(updateObj.data).text(function(d) { return _this.numbFormat(d[_this.name]);});
+        _mainObjectsData.update = function(updateObj) {
+            perc.data(updateObj.data).text(function(d) {
+                return d.perc + "%";
+            });
+            value.data(updateObj.data).text(function(d) {
+                return _this.numbFormat(d[_this.name]);
+            });
 
             this.attr("y", "77%")
-            .attr("x", objInfoX);
+                .attr("x", objInfoX);
         };
     };
 
@@ -329,24 +317,24 @@ define(function(require) {
 
     // };
 
-    RatioChart.prototype.update = function(objA, objB) {
+    RatioChart.prototype.update = function(data) {
         var _this = this;
-        var renderObject = _this.prepareRenderObject(objA, objB);
+        var renderObject = _this.prepareRenderObject(data);
 
-        arcs.update(renderObject);
-        sumElement.text(_this.numbFormat(renderObject.total));
-        objMainData.update(renderObject);
+        _arcs.update(renderObject);
+        _sumElement.text(_this.numbFormat(renderObject.total));
+        _mainObjectsData.update(renderObject);
     };
 
-    RatioChart.prototype.render = function(objA, objB) {
+    RatioChart.prototype.render = function() {
         var _this = this;
-        var renderObject = _this.prepareRenderObject(objA, objB);
-        containerWidth = _this.container.node().getBoundingClientRect().width;
-        containerHeight = _this.container.node().getBoundingClientRect().height;
+        var renderObject = _this.prepareRenderObject();
+        _containerWidth = _this.container.node().getBoundingClientRect().width;
+        _containerHeight = _this.container.node().getBoundingClientRect().height;
 
-        var svg = _this.container.data([renderObject]).append("svg")                       
-            .attr("width", containerWidth)
-            .attr("height", containerHeight);
+        var svg = _this.container.data([renderObject]).append("svg")
+            .attr("width", _containerWidth)
+            .attr("height", _containerHeight);
 
         _this.renderArcs(svg);
         _this.renderInnerStrokesCyrcle(svg);
