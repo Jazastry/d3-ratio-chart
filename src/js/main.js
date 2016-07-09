@@ -23,19 +23,23 @@ define(function(require) {
     });
 
     dataService.loadData().then(function() {
+        createCharts();
         var data = dataService.get({
             property: 'revenue',
             count: 10,
-            leftentry: 'tablet',
-            rightentry: 'smartphone'
+            leftEntry: 'tablet',
+            rightEntry: 'smartphone'
         });
-        update(data);
+        updateCharts(data);
     });
 
     var charts = [];
 
     function updateCharts(data) {
-        charts[0].prepareRenderObject(data.tablet, data.smartphone);
+        charts[0].update(data);
+        //charts[1].update(data);
+        console.log('charts ' , charts);
+        //console.log('charts ' , charts);
     }
     
     function createCharts() {

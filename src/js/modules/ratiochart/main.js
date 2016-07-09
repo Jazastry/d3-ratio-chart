@@ -78,7 +78,7 @@ define(function(require) {
             }).attr("transform", "translate(" + translateX + ", " + translateY + ")");
 
         _arcs.update = function(updateObj) {
-            _arcs.data(updateObj.data).transition().duration(750).attr("d", arc); //.transition().duration(750).attrTween("d", arcTween)
+            _arcs.data(updateObj.data).attr("d", arc); //.transition().duration(750).attrTween("d", arcTween)
         };
     };
 
@@ -141,26 +141,16 @@ define(function(require) {
         var renderObject = {};
 
         if (data) {
-            var total = objA[_this.name] + objB[_this.name];
 
-            renderObject = {
-                ratio: 0,
-                data: [objA, objB],
-                total: total
-            };
+            data.data[1].startAngle = _minAngle;
+            data.data[1].endAngle = data.data[1].percentage;
+            data.data[1].color = _bColor;
 
+            data.data[0].startAngle = data.data[1].percentage;
+            data.data[0].endAngle = _maxAngle;
+            data.data[0].color = _aColor;
 
-            objB.perc = utils.percentageFromWhole(total, objB[_this.name]);
-            objB.startAngle = _minAngle;
-            objB.endAngle = objB.perc;
-            objB.color = _bColor;
-
-            objA.perc = utils.percentageFromWhole(total, objA[_this.name]);
-            objA.startAngle = objB.perc;
-            objA.endAngle = _maxAngle;
-            objA.color = _aColor;
-
-            renderObject.ratio = objB.perc;
+            return data;
         } else {
             renderObject = {
                 //values: [0, 0],
@@ -299,10 +289,10 @@ define(function(require) {
 
         _mainObjectsData.update = function(updateObj) {
             perc.data(updateObj.data).text(function(d) {
-                return d.perc + "%";
+                return d.percentage + "%";
             });
             value.data(updateObj.data).text(function(d) {
-                return _this.numbFormat(d[_this.name]);
+                return _this.numbFormat(d.total);
             });
 
             this.attr("y", "77%")
@@ -319,7 +309,7 @@ define(function(require) {
 
     RatioChart.prototype.update = function(data) {
         var _this = this;
-        var renderObject = _this.prepareRenderObject(data);
+       var renderObject = _this.prepareRenderObject(data);
 
         _arcs.update(renderObject);
         _sumElement.text(_this.numbFormat(renderObject.total));

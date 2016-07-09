@@ -47,23 +47,23 @@ define(function(require) {
             return res.reverse();
         }
 
-        function caalcTotal(arr) {
+        function total(arr) {
             return arr.reduce(function(prev, curr) {
                 return prev + curr;
             });
         }
 
         var leftEntry = {
-            name: options.leftentry,
-            vals: last(options.count, _this.data[options.leftentry], options.property)                      
+            name: options.leftEntry,
+            vals: last(options.count, _this.data[options.leftEntry], options.property)                      
         };
-        leftEntry.total = caalcTotal(leftEntry.vals);
+        leftEntry.total = total(leftEntry.vals);
 
         var rightEntry = {
-            name: options.rightentry,
-            vals: last(options.count, _this.data[options.rightentry], options.property)            
+            name: options.rightEntry,
+            vals: last(options.count, _this.data[options.rightEntry], options.property)            
         };
-        rightEntry.total = caalcTotal(rightEntry.vals);
+        rightEntry.total = total(rightEntry.vals);
 
         var total = leftEntry.total + rightEntry.total;
         leftEntry.percentage = utils.percentageFromWhole(total, leftEntry.total);
@@ -74,7 +74,8 @@ define(function(require) {
             leftEntry: leftEntry,
             rightEntry: rightEntry,
             total: leftEntry.total + rightEntry.total,
-            ratio: rightEntry.percentage
+            ratio: rightEntry.percentage,
+            data: [leftEntry, rightEntry]
         };
     };
 
