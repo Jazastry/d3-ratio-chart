@@ -160,14 +160,14 @@ define(function(require) {
                     'endAngle': _maxAngle,
                     'color': _aColor,
                     'name': _this.keyA,
-                    'values': []                  
-                },{
-                   'perc': 50,
-                   'startAngle': _minAngle,
-                   'endAngle': 50,
-                   'color': _bColor,
-                   'name': _this.keyB,
-                   'values': []
+                    'values': []
+                }, {
+                    'perc': 50,
+                    'startAngle': _minAngle,
+                    'endAngle': 50,
+                    'color': _bColor,
+                    'name': _this.keyB,
+                    'values': []
                 }],
                 total: 0
             };
@@ -304,13 +304,70 @@ define(function(require) {
     RatioChart.prototype.renderLineChart = function(svg) {
         var _this = this;
 
+        var data = [
+            { x: 0, y: 10, },
+            { x: 1, y: 15, },
+            { x: 2, y: 35, },
+            { x: 3, y: 20, },
+            { x: 4, y: 22, },
+            { x: 5, y: 33, },
+            { x: 6, y: 10, },
+            { x: 7, y: 3, },
+            { x: 8, y: 27, },
+            { x: 9, y: 88, },
+            { x: 10, y: 50, },
+        ];
 
+        var margin = {top: 20, right: 20, bottom: 40, left: 50},
+            width = 575 - margin.left - margin.right,
+            height = 350 - margin.top - margin.bottom;
+
+        var x = d3.scale.linear()
+            .domain([0, d3.max(data, function(d) { return d.x; })])
+            .range([0, width]);
+
+        var y = d3.scale.linear()
+            .domain([0, d3.max(data, function(d) { return d.y; })])
+            .range([height, 0]);
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left");
+
+        var area = d3.svg.area()
+            .x(function(d) { return x(d.x); })
+            .y0(height)
+            .y1(function(d) { return y(d.y); });
+
+
+        var g = svg.attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        g.append("path")
+            .datum(data)
+            .attr("class", "area")
+            .attr("d", area);
+
+        g.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+
+        g.append("g")
+            .attr("class", "y axis")
+            .call(yAxis);
 
     };
 
     RatioChart.prototype.update = function(data) {
         var _this = this;
-       var renderObject = _this.prepareRenderObject(data);
+        var renderObject = _this.prepareRenderObject(data);
 
         _this._arcs.update(renderObject);
         _this._sumElement.text(_this.numbFormat(renderObject.total));

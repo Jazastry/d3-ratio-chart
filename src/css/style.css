@@ -6,3 +6,11 @@
 	display: inline-block;
 	font-family: Verdana, sans-serif;	
 }
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.area { fill: #4ca3bd; }
