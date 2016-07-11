@@ -17,57 +17,73 @@ define(function(require) {
     var RatioChart = require('ratioChart');
 
     var dataService = new DataModule({
-        updateNumbRange: 1500,
+        updateNumbRange: 200000,
         updateTimeStep: 2000,
         onUpdate: updateCharts,
     });
 
-    dataService.loadData().then(function() {
-        createCharts();
-        var data = dataService.get({
-            property: 'revenue',
-            count: 10,
-            leftEntry: 'tablet',
-            rightEntry: 'smartphone'
+    dataService.loadData()
+        .then(function() {
+            createCharts();
+            updateCharts();
+            dataService.startUpdateSimulator();
         });
-        updateCharts(data);
-    });
 
     var charts = [];
+    function updateCharts() {
+        var data,
+            queryPropertyes = {
+                property: '',
+                count: 10,
+                leftEntry: 'tablet',
+                rightEntry: 'smartphone'
+            };
 
-    function updateCharts(data) {
-        charts[0].update(data);
-        //charts[1].update(data);
-        console.log('charts ' , charts);
-        //console.log('charts ' , charts);
+        for (var i = 0; i < charts.length; i++) {
+            queryPropertyes.property = charts[i].name;
+            data = dataService.get(queryPropertyes);
+            updateChart(data);
+        }
     }
-    
+
+    function updateChart(data) {
+        var chart = charts.filter(function(obj) {
+            return obj.name === data.property;
+        })[0];
+        chart.update(data);
+    }
+
     function createCharts() {
-        var ratioOneContainer = d3.select('body')
-         .append('div').attr('class', 'chart');
-        var ratioChartOne = new RatioChart({
-            dataKey: "revenue",
-            container: ratioOneContainer,
-            isCurrency: true,
-            colorScheme: "green",
-            leftSideObjKey: "tablet",
-            rightSideObjKey: "smartphone",
-        });
+        var chartProperties = [{
+            name: 'revenue',
+            colorScheme: 'green'
+        }, {
+            name: 'impressions',
+            colorScheme: 'blue'
+        }, {
+            name: 'visits',
+            colorScheme: 'yellow'
+        }],
+            chart;
 
-        var ratioTwoContainer = d3.select('body')
+        for (var i = 0; i < chartProperties.length; i++) {
+            chart = createChart(chartProperties[i]);
+            charts.push(chart);
+        }
+    }
+
+    function createChart(prop) {
+        var container = d3.select('body')
             .append('div').attr('class', 'chart');
-        var ratioChartTwo = new RatioChart({
-            dataKey: "impresions",
-            container: ratioTwoContainer,
+        var chart = new RatioChart({
+            dataKey: prop.name,
+            container: container,
             isCurrency: false,
-            colorScheme: "blue",
+            colorScheme: prop.colorScheme,
             leftSideObjKey: "tablet",
             rightSideObjKey: "smartphone",
         });
 
-        charts = [
-            ratioChartOne,
-            ratioChartTwo
-        ];
+        return chart;
     }
 });

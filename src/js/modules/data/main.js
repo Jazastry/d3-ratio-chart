@@ -1,5 +1,6 @@
 define(function(require) {
     utils = require('utils');
+
     function Data(options) {
         this.data = {};
         this.updateNumbRange = options.updateNumbRange;
@@ -7,17 +8,28 @@ define(function(require) {
         this.onUpdate = options.onUpdate;
     }
 
+    Data.prototype.newRandomData = function(deviceName) {
+        var _this = this;
+
+        return {
+            'revenue': utils.randomInt(_this.updateNumbRange),
+            'impressions': utils.randomInt(_this.updateNumbRange),
+            'visits': utils.randomInt(_this.updateNumbRange),
+            'timeindex': _this.data[deviceName].length,
+            'device': deviceName,
+        };
+    };
+
     Data.prototype.loadData = function() {
         var _this = this;
 
         function type(d) {
-            d = {
-                'revenue': +d.revenue,
-                'impressions': +d.impressions,
-                'visits': +d.visits,
-                'timeindex': +d.timeindex,
-                'device': d.device,
-            };
+            d.revenue = +d.revenue;
+            d.impressions = +d.impressions;
+            d.visits = +d.visits;
+            d.timeindex = +d.timeindex;
+            d.device = d.device;
+
             return d;
         }
 
@@ -42,7 +54,7 @@ define(function(require) {
             for (var i = arr.length - 1; i > arr.length - (count + 1); i--) {
                 if (arr[i][prop]) {
                     res.push(arr[i][prop]);
-                }                
+                }
             }
             return res.reverse();
         }
@@ -55,25 +67,25 @@ define(function(require) {
 
         var leftEntry = {
             name: options.leftEntry,
-            vals: last(options.count, _this.data[options.leftEntry], options.property)                      
+            values: last(options.count, _this.data[options.leftEntry], options.property)
         };
-        leftEntry.total = total(leftEntry.vals);
+        leftEntry.total = total(leftEntry.values);
 
         var rightEntry = {
             name: options.rightEntry,
-            vals: last(options.count, _this.data[options.rightEntry], options.property)            
+            values: last(options.count, _this.data[options.rightEntry], options.property)
         };
-        rightEntry.total = total(rightEntry.vals);
+        rightEntry.total = total(rightEntry.values);
 
-        var total = leftEntry.total + rightEntry.total;
-        leftEntry.percentage = utils.percentageFromWhole(total, leftEntry.total);
-        rightEntry.percentage = utils.percentageFromWhole(total, rightEntry.total);
+        var totalOverall = leftEntry.total + rightEntry.total;
+        leftEntry.percentage = utils.percentageFromWhole(totalOverall, leftEntry.total);
+        rightEntry.percentage = utils.percentageFromWhole(totalOverall, rightEntry.total);
 
         return {
             property: options.property,
             leftEntry: leftEntry,
             rightEntry: rightEntry,
-            total: leftEntry.total + rightEntry.total,
+            total: totalOverall,
             ratio: rightEntry.percentage,
             data: [leftEntry, rightEntry]
         };
@@ -84,10 +96,12 @@ define(function(require) {
         var myVar = setInterval(myTimer, _this.updateTimeStep);
 
         function myTimer() {
+            for (var deviceName in _this.data) {
+                var newData = _this.newRandomData(deviceName);
+                _this.data[deviceName].push(newData);
+            }
 
-
-
-            _this.onUpdate(_this.data);
+            _this.onUpdate();
         }
     };
 
