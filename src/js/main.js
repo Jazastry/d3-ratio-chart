@@ -56,7 +56,8 @@ define(function(require) {
     function createCharts() {
         var chartProperties = [{
             name: 'revenue',
-            colorScheme: 'green'
+            colorScheme: 'green',
+            isCurrency: true
         }, {
             name: 'impressions',
             colorScheme: 'blue'
@@ -78,7 +79,7 @@ define(function(require) {
         var chart = new RatioChart({
             dataKey: prop.name,
             container: container,
-            isCurrency: false,
+            isCurrency: prop.isCurrency,
             colorScheme: prop.colorScheme,
             leftSideObjKey: "tablet",
             rightSideObjKey: "smartphone",
