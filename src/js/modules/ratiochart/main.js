@@ -67,7 +67,10 @@ define(function(require) {
         var translateX = _containerWidth / 2;
         var translateY = translateX - _cyrclePadding;
 
-        _this._arcs = svg.selectAll("path")
+        var arcsGroup = svg.append("g")
+            .attr("transform", "translate(" + translateX + ", " + translateY + ")");
+
+        _this._arcs = arcsGroup.selectAll("path")
             .data(function(d) {
                 return d.data;
             }).enter()
@@ -75,10 +78,12 @@ define(function(require) {
             .attr("d", arc)
             .style("fill", function(d) {
                 return d.color;
-            }).attr("transform", "translate(" + translateX + ", " + translateY + ")");
+            });
 
         _this._arcs.update = function(updateObj) {
-            _this._arcs.data(updateObj.data).attr("d", arc); //.transition().duration(750).attrTween("d", arcTween)
+            var arcTween = _this.arc(inR, outR);
+            
+            _this._arcs.data(updateObj.data).attr("d", arc);
         };
     };
 
@@ -87,7 +92,6 @@ define(function(require) {
             .innerRadius(inR)
             .outerRadius(outR)
             .startAngle(function(d) {
-
                 return utils.cScale(d.startAngle);
             })
             .endAngle(function(d) {
@@ -387,7 +391,7 @@ define(function(require) {
         _this.renderArcs(svg);
         _this.renderInnerStrokesCyrcle(svg);
         _this.renderInfo(svg);
-        _this.renderLineChart(svg);
+       // / _this.renderLineChart(svg);
     };
 
     return RatioChart;
