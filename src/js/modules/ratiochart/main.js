@@ -2,6 +2,7 @@ define(function(require) {
     var d3 = require('d3'),
         utils = require('utils'),
         _minAngle = 0,
+        _midAngle = 50,
         _maxAngle = 100,
         _aColor,
         _bColor,
@@ -68,7 +69,7 @@ define(function(require) {
         var arc = d3.svg.arc()
             .innerRadius(inR)
             .outerRadius(outR)
-            .startAngle(_minAngle);
+            .startAngle(utils.cScale(_minAngle));
 
         var arcsGroup = svg.append("g")
             .attr("transform", "translate(" + translateX + ", " + translateY + ")");
@@ -83,7 +84,7 @@ define(function(require) {
         var foreground = arcsGroup.append("path")
             .datum({
                 //TODO: add _midAngle variable
-                endAngle: utils.cScale(50)
+                endAngle: utils.cScale(_maxAngle)
             })
             .style("fill", _bColor)
             .attr("d", arc);
@@ -319,50 +320,48 @@ define(function(require) {
 
     RatioChart.prototype.renderLineChart = function(svg) {
         var _this = this;
+        var data = [
+            {x:0, y:100},
+            {x: 1, y: 30},
+            {x: 2, y: 46},
+            {x: 3, y: 20},
+            {x: 4, y: 22},
+            {x: 5, y: 33},
+            {x: 6, y: 10},
+            {x: 7, y: 3},
+            {x: 8, y: 27},
+            {x: 9, y: 100}
+        ];
+        // var data = [
+        //     {x:0, y:10},
+        //     {x: 1, y: 15},
+        //     {x: 2, y: 35},
+        //     {x: 3, y: 20},
+        //     {x: 4, y: 22},
+        //     {x: 5, y: 33},
+        //     {x: 6, y: 10},
+        //     {x: 7, y: 3},
+        //     {x: 8, y: 27},
+        //     {x: 9, y: 88},
+        //     {x: 10, y: 50}
+        // ];
 
-        var data = [{
-            x: 0,
-            y: 10,
-        }, {
-            x: 1,
-            y: 15,
-        }, {
-            x: 2,
-            y: 35,
-        }, {
-            x: 3,
-            y: 20,
-        }, {
-            x: 4,
-            y: 22,
-        }, {
-            x: 5,
-            y: 33,
-        }, {
-            x: 6,
-            y: 10,
-        }, {
-            x: 7,
-            y: 3,
-        }, {
-            x: 8,
-            y: 27,
-        }, {
-            x: 9,
-            y: 88,
-        }, {
-            x: 10,
-            y: 50,
-        }, ];
+        var translateX =  _cyrclePadding * 2 + _ratioCyrcleThickness + (2 *_strokesCyrcleThickness),
+            width = _containerWidth - (4 * _cyrclePadding) - (2 * _ratioCyrcleThickness) - (4 * _strokesCyrcleThickness),
+            height = _containerHeight / 5.2,
+            translateY = (_containerHeight / 100) * 43;
 
-        var margin = {
-                top: 20,
-                right: 20,
-                bottom: 40,
-                left: 50
-            },
-            width = 575 - margin.left - margin.right,
-            height = 350 - margin.top - margin.bottom;
+        // var outR = (_containerWidth / 2) - (2 * _cyrclePadding) - (_ratioCyrcleThickness + 2) - _strokesThickness;
+        // var inR = outR - _strokesCyrcleThickness;
+        // // _cyrclePadding = 55,
+        // _objInfoPadding = 10,
+        // _ratioCyrcleThickness = 13,
+        // _strokesCount = 4,
+        // _strokesThickness = 0.5,
+        // _strokesCyrcleThickness = 5,
+        // _containerWidth,
+        // _containerHeight;
+
 
         var x = d3.scale.linear()
             .domain([0, d3.max(data, function(d) {
@@ -376,14 +375,6 @@ define(function(require) {
             })])
             .range([height, 0]);
 
-        var xAxis = d3.svg.axis()
-            .scale(x)
-            .orient("bottom");
-
-        var yAxis = d3.svg.axis()
-            .scale(y)
-            .orient("left");
-
         var area = d3.svg.area()
             .x(function(d) {
                 return x(d.x);
@@ -394,25 +385,15 @@ define(function(require) {
             });
 
 
-        var g = svg.attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        var g = svg.append("g")
+            .attr("width", width)
+            .attr("height", height)
+            .attr("transform", "translate(" + translateX + "," + translateY + ")");
 
         g.append("path")
             .datum(data)
             .attr("class", "area")
             .attr("d", area);
-
-        g.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(xAxis);
-
-        g.append("g")
-            .attr("class", "y axis")
-            .call(yAxis);
-
     };
 
     RatioChart.prototype.update = function(data) {
@@ -437,7 +418,7 @@ define(function(require) {
         _this.renderArcs(svg);
         _this.renderInnerStrokesCyrcle(svg);
         _this.renderInfo(svg);
-        // / _this.renderLineChart(svg);
+        _this.renderLineChart(svg);
     };
 
     return RatioChart;
