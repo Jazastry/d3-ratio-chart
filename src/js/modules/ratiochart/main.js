@@ -321,15 +321,15 @@ define(function(require) {
     RatioChart.prototype.renderLineChart = function(svg) {
         var _this = this;
         var data = [
-            {x:0, y:100},
-            {x: 1, y: 30},
+            {x:0, y: 0},
+            {x: 1, y: 0},
             {x: 2, y: 46},
             {x: 3, y: 20},
             {x: 4, y: 22},
             {x: 5, y: 33},
             {x: 6, y: 10},
             {x: 7, y: 3},
-            {x: 8, y: 27},
+            {x: 8, y: 0},
             {x: 9, y: 100}
         ];
         // var data = [
@@ -348,7 +348,7 @@ define(function(require) {
 
         var translateX =  _cyrclePadding * 2 + _ratioCyrcleThickness + (2 *_strokesCyrcleThickness),
             width = _containerWidth - (4 * _cyrclePadding) - (2 * _ratioCyrcleThickness) - (4 * _strokesCyrcleThickness),
-            height = _containerHeight / 5.2,
+            height = _containerHeight / 4.8,
             translateY = (_containerHeight / 100) * 43;
 
         // var outR = (_containerWidth / 2) - (2 * _cyrclePadding) - (_ratioCyrcleThickness + 2) - _strokesThickness;
@@ -375,8 +375,14 @@ define(function(require) {
             })])
             .range([height, 0]);
 
+        var test = d3.scale.linear()
+            .domain([0, 100])
+            .range([50, 100]);
+
+         console.log(test(10));
+
         var area = d3.svg.area()
-            .x(function(d) {
+            .x(function(d) {                
                 return x(d.x);
             })
             .y0(height)
@@ -415,10 +421,14 @@ define(function(require) {
             .attr("width", _containerWidth)
             .attr("height", _containerHeight);
 
+       
+        
+        _this.renderLineChart(svg);
+
+        _this.renderInfo(svg);
+
         _this.renderArcs(svg);
         _this.renderInnerStrokesCyrcle(svg);
-        _this.renderInfo(svg);
-        _this.renderLineChart(svg);
     };
 
     return RatioChart;
