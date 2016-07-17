@@ -84,7 +84,7 @@ define(function(require) {
         var foreground = arcsGroup.append("path")
             .datum({
                 //TODO: add _midAngle variable
-                endAngle: utils.cScale(_maxAngle)
+                endAngle: utils.cScale(_minAngle)
             })
             .style("fill", _bColor)
             .attr("d", arc);
@@ -114,6 +114,7 @@ define(function(require) {
 
     RatioChart.prototype.renderInnerStrokesCyrcle = function(svg) {
         var _this = this;
+        var strokesPadding = 2;
         var strokesData = (function() {
             var res = [];
             var start = 0;
@@ -136,16 +137,25 @@ define(function(require) {
             return res.reverse();
         }());
 
-        var outR = (_containerWidth / 2) - (2 * _cyrclePadding) - (_ratioCyrcleThickness + 2);
+        var outR = (_containerWidth / 2) - (2 * _cyrclePadding) - (_ratioCyrcleThickness + strokesPadding);
         var inR = outR - _strokesCyrcleThickness;
-        var arc = _this.arc(inR, outR);
+        var strokesArc = _this.arc(inR, outR);
+        var backgroundArc = _this.arc(inR, outR + 2)
 
         var translateX = _containerWidth / 2;
         var translateY = translateX - _cyrclePadding;
 
+        svg.append("path").attr("d",  d3.svg.arc()
+                    .innerRadius(inR - strokesPadding)
+                    .outerRadius(outR + _containerWidth)
+                    .startAngle(utils.cScale(_minAngle))
+                    .endAngle(utils.cScale(_maxAngle)))
+            .style("fill", "#FFF")
+            .attr("transform", "translate(" + translateX + ", " + translateY + ")");
+
         svg.selectAll("path")
             .data(strokesData).enter()
-            .append("path").attr("d", arc)
+            .append("path").attr("d", strokesArc)
             .style("fill", function(d) {
                 return d.color;
             })
@@ -321,16 +331,16 @@ define(function(require) {
     RatioChart.prototype.renderLineChart = function(svg) {
         var _this = this;
         var data = [
-            {x:0, y: 0},
-            {x: 1, y: 0},
-            {x: 2, y: 46},
-            {x: 3, y: 20},
-            {x: 4, y: 22},
-            {x: 5, y: 33},
-            {x: 6, y: 10},
-            {x: 7, y: 3},
-            {x: 8, y: 0},
-            {x: 9, y: 100}
+            { x: 0, y: 30 },
+            { x: 1, y: 20 },
+            { x: 2, y: 46 },
+            { x: 3, y: 20 },
+            { x: 4, y: 22 },
+            { x: 5, y: 33 },
+            { x: 6, y: 10 },
+            { x: 7, y: 30 },
+            { x: 8, y: 10 },
+            { x: 9, y: 80 }
         ];
         // var data = [
         //     {x:0, y:10},
@@ -346,9 +356,9 @@ define(function(require) {
         //     {x: 10, y: 50}
         // ];
 
-        var translateX =  _cyrclePadding * 2 + _ratioCyrcleThickness + (2 *_strokesCyrcleThickness),
-            width = _containerWidth - (4 * _cyrclePadding) - (2 * _ratioCyrcleThickness) - (4 * _strokesCyrcleThickness),
-            height = _containerHeight / 4.8,
+        var translateX = _cyrclePadding * 2 + _ratioCyrcleThickness + (1.5 * _strokesCyrcleThickness),
+            width = _containerWidth - (4 * _cyrclePadding) - (2 * _ratioCyrcleThickness) - (3.3 * _strokesCyrcleThickness),
+            height = _containerHeight / 4.5,
             translateY = (_containerHeight / 100) * 43;
 
         // var outR = (_containerWidth / 2) - (2 * _cyrclePadding) - (_ratioCyrcleThickness + 2) - _strokesThickness;
@@ -370,24 +380,45 @@ define(function(require) {
             .range([0, width]);
 
         var y = d3.scale.linear()
-            .domain([0, d3.max(data, function(d) {
+            .domain([0, d3.max(data, function(d, i) {      
                 return d.y;
             })])
             .range([height, 0]);
 
         var test = d3.scale.linear()
-            .domain([0, 100])
-            .range([50, 100]);
+            .domain([d3.max(data, function(d, i) {      
+                return d.y;
+            }), 0])
+            .range([0, height]);
 
-         console.log(test(10));
+       console.log(test(99))
+
+
+        //::::::::::::::::::
+        var outR = (_containerWidth / 2) - (2 * _cyrclePadding);
+        var inR = outR - _ratioCyrcleThickness - 10;
+        //var translateX = _containerWidth / 2;
+        // var translateY = translateX - _cyrclePadding;
+
+        var arc = d3.svg.arc()
+            .innerRadius(inR)
+            .outerRadius(outR)
+            .startAngle(utils.cScale(_minAngle))
+            .endAngle(utils.cScale(_maxAngle));
+
+        //:::::::::::::::::::
 
         var area = d3.svg.area()
-            .x(function(d) {                
+            .interpolate("basis") 
+            .x(function(d) {
                 return x(d.x);
             })
-            .y0(height)
+            .y0(function(d) {
+                console.log(test(d.y), d.y);
+                return height;// + test(d.y);
+            })
             .y1(function(d) {
-                return y(d.y);
+                return y(d.y) - test(d.y) / 2.1;//- 2;
             });
 
 
@@ -421,14 +452,14 @@ define(function(require) {
             .attr("width", _containerWidth)
             .attr("height", _containerHeight);
 
-       
-        
+
+
         _this.renderLineChart(svg);
 
-        _this.renderInfo(svg);
-
-        _this.renderArcs(svg);
         _this.renderInnerStrokesCyrcle(svg);
+        _this.renderArcs(svg);
+        _this.renderInfo(svg);
+         // _this.renderLineChart(svg);
     };
 
     return RatioChart;
