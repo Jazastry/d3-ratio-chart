@@ -15,6 +15,7 @@ define(function(require) {
     var d3 = require('d3');
     var DataModule = require('dataService');
     var RatioChart = require('ratioChart');
+    var timeRange = 10;
 
     var dataService = new DataModule({
         updateNumbRange: 200000,
@@ -34,7 +35,7 @@ define(function(require) {
         var data,
             queryPropertyes = {
                 property: '',
-                count: 10,
+                count: timeRange,
                 leftEntry: 'tablet',
                 rightEntry: 'smartphone'
             };
@@ -83,6 +84,7 @@ define(function(require) {
             colorScheme: prop.colorScheme,
             leftSideObjKey: "tablet",
             rightSideObjKey: "smartphone",
+            timeRange: timeRange
         });
 
         return chart;
